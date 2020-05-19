@@ -1,0 +1,12 @@
+media
+src
+test
+.prettierignore
+tsconfig.json
+tslint.json
+jest.unit.config.json
+bitbucket-pipelines.yml
+.prettierrc.json
+dist/**/*.test.*
+jest.*.js
+jest.*.json
