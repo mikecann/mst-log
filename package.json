@@ -1,10 +1,10 @@
 {
   "name": "mst-log",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A console logging middleware for MobX State Tree",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "repository": "https://github.com/mikecann/flowPipe.git",
+  "repository": "https://github.com/mikecann/mst-log.git",
   "author": "Mike Cann <mike.cann@gmail.com>",
   "license": "MIT",
   "scripts": {
