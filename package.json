@@ -1,6 +1,6 @@
 {
   "name": "mst-log",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A console logging middleware for MobX State Tree",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

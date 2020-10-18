@@ -21,6 +21,8 @@ export type Options = {
   getShouldGroupBeCollapsed: (call: IMiddlewareEvent) => boolean;
   logger: Logger;
   getTime: () => number;
+  shouldLogStateChangeInChildActions: boolean;
+  shouldLogExecutionTimeInChildActions: boolean;
 };
 
 export const mstLog = (options?: Partial<Options>) => {
@@ -30,11 +32,25 @@ export const mstLog = (options?: Partial<Options>) => {
   const _getShouldGroupBeCollapsed =
     (options && options.getShouldGroupBeCollapsed) ?? getShouldGroupBeCollapsed;
   const _getTime = (options && options.getTime) ?? getTime;
+  const _shouldLogStateChangeInChildActions = options?.shouldLogStateChangeInChildActions ?? false;
+  const _shouldLogExecutionTimeInChildActions =
+    options?.shouldLogExecutionTimeInChildActions ?? false;
 
   // the actual middleware
   return (call: IMiddlewareEvent, next: (call: IMiddlewareEvent) => void) => {
     const snapshotBefore = getSnapshot(call.tree);
     const timeBefore = _getTime();
+
+    const isTopLevelCall =
+      !call.parentEvent ||
+      call.type == "flow_return" ||
+      call.type == "flow_resume" ||
+      call.type == "flow_resume_error" ||
+      call.type == "flow_throw";
+
+    const logState = isTopLevelCall || _shouldLogStateChangeInChildActions;
+
+    const logExecutionTime = isTopLevelCall || _shouldLogExecutionTimeInChildActions;
 
     const grp = _getShouldGroupBeCollapsed(call) ? _logger.groupCollapsed : _logger.group;
     grp(
@@ -51,15 +67,25 @@ export const mstLog = (options?: Partial<Options>) => {
     );
 
     _logger.log(`%c args`, `color: grey; font-weight: bold;`, ...call.args);
-    _logger.log(`%c prev state`, `color: #cc8de0; font-weight: bold;`, snapshotBefore);
 
-    next(call);
+    if (logState)
+      _logger.log(`%c prev state`, `color: #cc8de0; font-weight: bold;`, snapshotBefore);
+
+    try {
+      next(call);
+    } catch (e) {
+      _logger.groupEnd();
+      throw e;
+    }
 
     const timeAfter = _getTime();
     const snapshotAfter = getSnapshot(call.tree);
 
-    _logger.log(`%c next state`, `color: #4CAF50; font-weight: bold;`, snapshotAfter);
-    _logger.log(`%c ${(timeAfter - timeBefore).toFixed(2)}ms elapsed`, `color: grey;`);
+    if (logState) _logger.log(`%c next state`, `color: #4CAF50; font-weight: bold;`, snapshotAfter);
+
+    if (logExecutionTime)
+      _logger.log(`%c ${(timeAfter - timeBefore).toFixed(2)}ms elapsed`, `color: grey;`);
+
     _logger.groupEnd();
   };
 };
